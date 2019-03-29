@@ -15,6 +15,7 @@ URL:		http://opentimestamps.org/
 Source0:	https://github.com/opentimestamps/opentimestamps-server/archive/opentimestamps-server-v%{version}%{?prerelease}.tar.gz
 Source1:	otsd.service
 Source2:	otsd.sysconfig
+Source3:        bitcoind-ready.sh
 #Source3:	README.redhat
 #Source5:	bitcoin.te
 #Source6:	bitcoin.fc
@@ -94,16 +95,15 @@ cp -a dist/otsd-backup %{buildroot}%{_prefix}/lib/%{name}-%{version}
 cp -a contrib/nginx/a.pool.opentimestamps.org contrib/nginx.example
 
 # systemd service and cocnfig files
-sed -i 's/\/usr\/local\/bin\/bitcoind-ready.sh/\/usr\/sbin\/bitcoind-ready.sh/g' contrib/systemd/otsd.service
-install -d %{buildroot}%{_prefix}/sbin
-install -m750 -p contrib/systemd/bitcoind-ready.sh %{buildroot}%{_prefix}/sbin
+install -d -m755 -p %{buildroot}%{_prefix}/sbin
+install -m750 -p %{SOURCE3} %{buildroot}%{_prefix}/sbin/bitcoind-ready.sh
 install -d -m755 -p %{buildroot}%{_unitdir}
 install -m644 -p %{SOURCE1} %{buildroot}%{_unitdir}/otsd.service
 install -d -m755 -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m644 -p %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/otsd
 
 # calendar dir
-install -d -m755 %{buildroot}%{_localstatedir}/lib/otsd/calendar
+install -d -m755 -p %{buildroot}%{_localstatedir}/lib/otsd/calendar
 
 # TBD: man pages
 #install -D -m644 -p doc/man/bitcoin-qt.1 %{buildroot}%{_mandir}/man1/bitcoin-qt.1
@@ -130,11 +130,17 @@ rm -rf %{buildroot}
 %post 
 
 # links to executables
-ln -s -t /usr/sbin/otsd %{_prefix}/lib/%{name}-%{version}/otsd/otsd
-ln -s -t /usr/sbin/otsd-backup %{_prefix}/lib/%{name}-%{version}/otsd/otsd-backup
+ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
+ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd-backup
 
 # generate random hmac-key
-dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1
+[ -f %{_localstatedir}/lib/otsd/calendar/hmac-key ] || dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1 > /dev/null 2>&1
+
+# workaround to missing options for calendar server
+ln -s /var/lib/bitcoin /var/lib/bitcoin/.bitcoin
+ln -s /etc/bitcoin/bitcoin.conf /var/lib/bitcoin/bitcoin.conf
+ln -s /var/lib/bitcoin/testnet3 /var/lib/bitcoin/testnet
+ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
 
 # setup systemd service 
 %systemd_post otsd.service
@@ -157,11 +163,11 @@ dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1
 /usr/bin/systemd-tmpfiles --create
 
 %preun 
-%systemd_preun bitcoin.service
+%systemd_preun ots.service
 
 
 %postun 
-%systemd_postun bitcoin.service
+%systemd_postun ots.service
 #if [ $1 -eq 0 ] ; then
 	# FIXME This is less than ideal, but until dwalsh gives me a better way...
 #	/usr/sbin/semanage port -d -p tcp 8332
@@ -179,11 +185,20 @@ dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1
 #		&> /dev/null || :
 #fi
 
+# remove links 
+rm -f /usr/sbin/otsd
+rm -f /usr/sbin/otsd-backup
+rm -f /var/lib/bitcoin/.bitcoin
+rm -f /var/lib/bitcoin/bitcoin.conf
+rm -f /var/lib/bitcoin/testnet
+rm -f /var/lib/bitcoin/.otsd
 
 %files 
 %defattr(-,root,root,-)
-%dir %attr(750,bitcoin,bitcoin) %{_localstatedir}/lib/otsd
-%config(noreplace) %attr(600,root,root) %{_sysconfdir}/sysconfig/otsd
+%dir %{_localstatedir}/lib/otsd
+%attr(750,bitcoin,bitcoin) %{_localstatedir}/lib/otsd
+%attr(750,bitcoin,bitcoin) %{_localstatedir}/lib/otsd/calendar
+%config(noreplace) %attr(644,root,root) %{_sysconfdir}/sysconfig/otsd
 %{_prefix}/lib/%{name}-%{version}
 %{_unitdir}/otsd.service
 %license LICENSE
