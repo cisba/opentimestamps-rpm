@@ -131,7 +131,7 @@ rm -rf %{buildroot}
 
 # links to executables
 ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
-ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd-backup
+ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd-backup/otsd-backup
 
 # generate random hmac-key
 [ -f %{_localstatedir}/lib/otsd/calendar/hmac-key ] || dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1 > /dev/null 2>&1
