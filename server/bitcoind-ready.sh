@@ -1,4 +1,4 @@
-#|/bin/env bash
+#!/bin/env bash
 
 cookie=/var/lib/bitcoin/.cookie
 if grep -q -- 'OPTIONS=".*--btc-testnet' /etc/sysconfig/otsd
