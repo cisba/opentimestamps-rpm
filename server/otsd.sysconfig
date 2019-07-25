@@ -1,5 +1,5 @@
-# Provide options to the bitcoin daemon here, for example
-# OPTIONS="-testnet -disable-wallet"
+# Provide options to the calendar server here, for example
+# OPTIONS="--btc-testnet --btc-max-fee=0.0001"
 
 OPTIONS=""
 
