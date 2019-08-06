@@ -6,7 +6,7 @@
 
 Name:		opentimestamps-server
 Version:	0.3.0
-Release:	1%{?prerelease}%{?dist}
+Release:	2%{?prerelease}%{?dist}
 Summary:	Calendar server for Bitcoin timestamping
 
 Group:		Applications/System
@@ -16,6 +16,7 @@ Source0:	https://github.com/opentimestamps/opentimestamps-server/archive/opentim
 Source1:	otsd.service
 Source2:	otsd.sysconfig
 Source3:        bitcoind-ready.sh
+Patch0:         working-hour.patch
 
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
@@ -35,6 +36,8 @@ This package provides the otsd daemon, a calendar server which provides aggregat
 # Fake configure to skip build process
 echo "exit 0" > ./configure
 chmod +x ./configure
+
+%patch0 -p1
 
 %build
 
@@ -82,16 +85,15 @@ rm -rf %{buildroot}
 
 %post 
 
-# links to executables
-ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
-ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd-backup/otsd-backup
-
 # generate random hmac-key
 [ -f %{_localstatedir}/lib/otsd/calendar/hmac-key ] || dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1 > /dev/null 2>&1
 
+# links to executables
+[ -f /usr/sbin/otsd ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
+[ -f /usr/sbin/otsd-backup ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd-backup/otsd-backup
 # workaround to missing options for calendar server
-ln -s /var/lib/bitcoin/testnet3 /var/lib/bitcoin/testnet
-ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
+[ -f /var/lib/bitcoin/testnet ] || ln -s /var/lib/bitcoin/testnet3/ /var/lib/bitcoin/testnet
+[ -f /var/lib/bitcoin/.otsd ] || ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
 
 # setup systemd service 
 %systemd_post otsd.service
@@ -102,15 +104,16 @@ ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
 %preun 
 %systemd_preun ots.service
 
+# remove links only if uninstall, not if upgrade 
+if [ $1 == 0 ] ; then # 0 := remove/uninstall
+    rm -f /usr/sbin/otsd
+    rm -f /usr/sbin/otsd-backup
+    rm -f /var/lib/bitcoin/testnet
+    rm -f /var/lib/bitcoin/.otsd
+fi
 
 %postun 
 %systemd_postun ots.service
-
-# remove links 
-rm -f /usr/sbin/otsd
-rm -f /usr/sbin/otsd-backup
-rm -f /var/lib/bitcoin/testnet
-rm -f /var/lib/bitcoin/.otsd
 
 %files 
 %defattr(-,root,root,-)
@@ -125,5 +128,8 @@ rm -f /var/lib/bitcoin/.otsd
 %attr(750,bitcoin,bitcoin) %{_sbindir}/bitcoind-ready.sh
 
 %changelog
+* Tue Aug  6 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.3.0-2
+- working hour patch
+- fixed links deletion during upgrade
 * Thu Mar 28 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.3.0-1
 - First release
