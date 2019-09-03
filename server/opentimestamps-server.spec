@@ -95,11 +95,11 @@ rm -rf %{buildroot}
 [ -f %{_localstatedir}/lib/otsd/calendar/hmac-key ] || dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1 > /dev/null 2>&1
 
 # links to executables
-[ -f /usr/sbin/otsd ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
-[ -f /usr/sbin/otsd-backup ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd-backup/otsd-backup
+[ -e /usr/sbin/otsd ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
+[ -e /usr/sbin/otsd-backup ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd-backup/otsd-backup
 # workaround to missing options for calendar server
-[ -f /var/lib/bitcoin/testnet ] || ln -s /var/lib/bitcoin/testnet3/ /var/lib/bitcoin/testnet
-[ -f /var/lib/bitcoin/.otsd ] || ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
+[ -e /var/lib/bitcoin/testnet ] || ln -s /var/lib/bitcoin/testnet3/ /var/lib/bitcoin/testnet
+[ -e /var/lib/bitcoin/.otsd ] || ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
 
 # setup systemd service 
 %systemd_post otsd.service
@@ -112,10 +112,10 @@ rm -rf %{buildroot}
 
 # remove links only if uninstall, not if upgrade 
 if [ $1 == 0 ] ; then # 0 := remove/uninstall
-    rm -f /usr/sbin/otsd
-    rm -f /usr/sbin/otsd-backup
-    rm -f /var/lib/bitcoin/testnet
-    rm -f /var/lib/bitcoin/.otsd
+    [ -h /usr/sbin/otsd ] && rm -f /usr/sbin/otsd
+    [ -h /usr/sbin/otsd-backup ] && rm -f /usr/sbin/otsd-backup
+    [ -h /var/lib/bitcoin/testnet ] && rm -f /var/lib/bitcoin/testnet
+    [ -h /var/lib/bitcoin/.otsd ] && rm -f /var/lib/bitcoin/.otsd
 fi
 
 %postun 
