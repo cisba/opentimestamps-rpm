@@ -110,16 +110,16 @@ rm -rf %{buildroot}
 %preun 
 %systemd_preun ots.service
 
+%postun 
+%systemd_postun ots.service
+
 # remove links only if uninstall, not if upgrade 
-if [ $1 == 0 ] ; then # 0 := remove/uninstall
+if [ $1 -eq 0 ] ; then # 0 := remove/uninstall
     [ -h /usr/sbin/otsd ] && rm -f /usr/sbin/otsd
     [ -h /usr/sbin/otsd-backup ] && rm -f /usr/sbin/otsd-backup
     [ -h /var/lib/bitcoin/testnet ] && rm -f /var/lib/bitcoin/testnet
     [ -h /var/lib/bitcoin/.otsd ] && rm -f /var/lib/bitcoin/.otsd
 fi
-
-%postun 
-%systemd_postun ots.service
 
 %files 
 %defattr(-,root,root,-)
