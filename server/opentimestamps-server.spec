@@ -108,10 +108,10 @@ rm -rf %{buildroot}
 /usr/bin/systemd-tmpfiles --create
 
 %preun 
-%systemd_preun ots.service
+%systemd_preun otsd.service
 
 %postun 
-%systemd_postun ots.service
+%systemd_postun_with_restart otsd.service
 
 # remove links only if uninstall, not if upgrade 
 if [ $1 -eq 0 ] ; then # 0 := remove/uninstall
@@ -138,6 +138,7 @@ fi
 - workshit_done flag patch
 - estimatesmartfee patch
 - debug file rotation backup-count param patch
+- fixed stop before uninstall and restart after upgrade
 * Tue Aug  6 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.3.0-2
 - working hour patch
 - fixed links deletion during upgrade
