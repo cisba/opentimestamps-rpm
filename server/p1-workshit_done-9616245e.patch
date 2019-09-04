@@ -1,0 +1,42 @@
+diff --git a/otsserver/stamper.py b/otsserver/stamper.py
+index b8c2bc8..0dddbad 100644
+--- a/otsserver/stamper.py
++++ b/otsserver/stamper.py
+@@ -358,9 +358,17 @@ class Stamper:
+ 
+                 break
+ 
+-        if self.working_hour and str(datetime.utcnow().hour) not in self.working_hour:
+-            logging.debug("No working hour")
+-            return
++        if self.working_hour and self.workshift_done:
++            # If we are running in working_hour mode
++            # AND the previous workshit is completed with a tx
++            if str(datetime.utcnow().hour) not in self.working_hour:
++                # Do not work ouside the workshift
++                logging.debug("No working hour")
++                return
++            else:
++                # Start working and set flag to continue until
++                # the work is done with a tx, also outside workshit
++                self.workshift_done = False
+ 
+         time_to_next_tx = int(self.last_timestamp_tx + self.min_tx_interval - time.time())
+         if time_to_next_tx > 0:
+@@ -429,6 +437,8 @@ class Stamper:
+                     raise err  # something else, fail!
+ 
+             sent_tx = signed_tx
++            if self.working_hour:
++                self.workshift_done = True
+ 
+         if self.unconfirmed_txs:
+             logging.info("Sent timestamp tx %s, replacing %s; %d total commitments; %d prior tx versions" %
+@@ -516,6 +526,7 @@ class Stamper:
+         self.max_fee = max_fee
+         self.max_pending = max_pending
+         self.working_hour = working_hour
++        self.workshift_done = False
+ 
+         self.known_blocks = KnownBlocks()
+         self.unconfirmed_txs = []

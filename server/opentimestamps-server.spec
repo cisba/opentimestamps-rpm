@@ -6,7 +6,7 @@
 
 Name:		opentimestamps-server
 Version:	0.3.0
-Release:	2%{?prerelease}%{?dist}
+Release:	3%{?prerelease}%{?dist}
 Summary:	Calendar server for Bitcoin timestamping
 
 Group:		Applications/System
@@ -16,7 +16,10 @@ Source0:	https://github.com/opentimestamps/opentimestamps-server/archive/opentim
 Source1:	otsd.service
 Source2:	otsd.sysconfig
 Source3:        bitcoind-ready.sh
-Patch0:         working-hour.patch
+Patch0:         p0-working-hour-9141e3ab.patch
+Patch1:         p1-workshit_done-9616245e.patch
+Patch2:         p2-estimatesmartfee-14f181e9.patch
+Patch3:         p3-debug-file-backup-count-3f89d066.patch
 
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
@@ -38,6 +41,9 @@ echo "exit 0" > ./configure
 chmod +x ./configure
 
 %patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
 
 %build
 
@@ -128,6 +134,10 @@ fi
 %attr(750,bitcoin,bitcoin) %{_sbindir}/bitcoind-ready.sh
 
 %changelog
+* Tue Sep  3 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.3.0-3
+- workshit_done flag patch
+- estimatesmartfee patch
+- debug file rotation backup-count param patch
 * Tue Aug  6 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.3.0-2
 - working hour patch
 - fixed links deletion during upgrade
