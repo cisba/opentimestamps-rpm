@@ -5,8 +5,8 @@
 %define debug_package %{nil}
 
 Name:		opentimestamps-server
-Version:	0.3.0
-Release:	3%{?prerelease}%{?dist}
+Version:	0.4.0
+Release:	1%{?prerelease}%{?dist}
 Summary:	Calendar server for Bitcoin timestamping
 
 Group:		Applications/System
@@ -16,10 +16,7 @@ Source0:	https://github.com/opentimestamps/opentimestamps-server/archive/opentim
 Source1:	otsd.service
 Source2:	otsd.sysconfig
 Source3:        bitcoind-ready.sh
-Patch0:         p0-working-hour-9141e3ab.patch
-Patch1:         p1-workshit_done-9616245e.patch
-Patch2:         p2-estimatesmartfee-14f181e9.patch
-Patch3:         p3-debug-file-backup-count-3f89d066.patch
+Patch0:         p0-commit-2fcf632.patch
 
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
@@ -41,9 +38,6 @@ echo "exit 0" > ./configure
 chmod +x ./configure
 
 %patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
 
 %build
 
@@ -66,9 +60,9 @@ deactivate
 rm -rf %{buildroot}
 
 # install exec
-install -d %{buildroot}%{_prefix}/lib/%{name}-%{version}
-cp -a dist/otsd %{buildroot}%{_prefix}/lib/%{name}-%{version}
-cp -a dist/otsd-backup %{buildroot}%{_prefix}/lib/%{name}-%{version}
+install -d %{buildroot}%{_prefix}/lib/%{name}
+cp -a dist/otsd %{buildroot}%{_prefix}/lib/%{name}
+cp -a dist/otsd-backup %{buildroot}%{_prefix}/lib/%{name}
 
 # install contrib
 cp -a contrib/nginx/a.pool.opentimestamps.org contrib/nginx.example
@@ -94,9 +88,12 @@ rm -rf %{buildroot}
 # generate random hmac-key
 [ -f %{_localstatedir}/lib/otsd/calendar/hmac-key ] || dd if=/dev/random of=%{_localstatedir}/lib/otsd/calendar/hmac-key bs=32 count=1 > /dev/null 2>&1
 
+# [workaround to fix old libpath with version] 
+[ -h /usr/sbin/otsd ] && rm -f /usr/sbin/otsd
+[ -h /usr/sbin/otsd-backup ] && rm -f /usr/sbin/otsd-backup
 # links to executables
-[ -e /usr/sbin/otsd ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd/otsd
-[ -e /usr/sbin/otsd-backup ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}-%{version}/otsd-backup/otsd-backup
+[ -e /usr/sbin/otsd ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}/otsd/otsd
+[ -e /usr/sbin/otsd-backup ] || ln -s -t /usr/sbin %{_prefix}/lib/%{name}/otsd-backup/otsd-backup
 # workaround to missing options for calendar server
 [ -e /var/lib/bitcoin/testnet ] || ln -s /var/lib/bitcoin/testnet3/ /var/lib/bitcoin/testnet
 [ -e /var/lib/bitcoin/.otsd ] || ln -s /var/lib/otsd/ /var/lib/bitcoin/.otsd
@@ -127,13 +124,17 @@ fi
 %attr(750,bitcoin,bitcoin) %{_localstatedir}/lib/otsd
 %attr(750,bitcoin,bitcoin) %{_localstatedir}/lib/otsd/calendar
 %config(noreplace) %attr(644,root,root) %{_sysconfdir}/sysconfig/otsd
-%{_prefix}/lib/%{name}-%{version}
+%{_prefix}/lib/%{name}
 %{_unitdir}/otsd.service
 %license LICENSE
 %doc doc/merkle-mountain-range.md README.md release-notes.md contrib/nginx.example
 %attr(750,bitcoin,bitcoin) %{_sbindir}/bitcoind-ready.sh
 
 %changelog
+* Mon Sep  9 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.4.0-1
+- upgraded to opentimestamps-server-0.4.0
+- removed version from /usr/lib path
+- patch0: --working-hours, --debug-file-backup-count, json stats
 * Tue Sep  3 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.3.0-3
 - workshit_done flag patch
 - estimatesmartfee patch
