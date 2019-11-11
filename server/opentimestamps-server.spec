@@ -6,7 +6,7 @@
 
 Name:		opentimestamps-server
 Version:	0.4.0
-Release:	1%{?prerelease}%{?dist}
+Release:	2%{?prerelease}%{?dist}
 Summary:	Calendar server for Bitcoin timestamping
 
 Group:		Applications/System
@@ -16,7 +16,7 @@ Source0:	https://github.com/opentimestamps/opentimestamps-server/archive/opentim
 Source1:	otsd.service
 Source2:	otsd.sysconfig
 Source3:        bitcoind-ready.sh
-Patch0:         p0-commit-2fcf632.patch
+Patch0:         p0-commit-4671f42.patch
 
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
@@ -46,7 +46,7 @@ python3.6 -m venv venv
 source venv/bin/activate
 pip3 install --upgrade pip
 pip3 install safety
-pip3 install -r requirements.txt 
+pip3 install -r requirements.txt
 pip3 install pyinstaller
 safety check
 pyinstaller otsd
@@ -131,6 +131,8 @@ fi
 %attr(750,bitcoin,bitcoin) %{_sbindir}/bitcoind-ready.sh
 
 %changelog
+* Mon Nov 11 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.4.0-2
+- patch0: --working-hours, --debug-file-backup-count, json stats, dust
 * Mon Sep  9 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.4.0-1
 - upgraded to opentimestamps-server-0.4.0
 - removed version from /usr/lib path

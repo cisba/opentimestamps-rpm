@@ -68,7 +68,7 @@ index 94e5ed8..c931b5e 100644
  
          elif self.path.startswith('/timestamp/'):
 diff --git a/otsserver/stamper.py b/otsserver/stamper.py
-index 4007e1f..10f757d 100644
+index 4007e1f..79b78b8 100644
 --- a/otsserver/stamper.py
 +++ b/otsserver/stamper.py
 @@ -25,6 +25,7 @@ from opentimestamps.core.op import OpPrepend, OpSHA256
@@ -79,7 +79,17 @@ index 4007e1f..10f757d 100644
  
  KnownBlock = collections.namedtuple('KnownBlock', ['height', 'hash'])
  TimestampTx = collections.namedtuple('TimestampTx', ['tx', 'tip_timestamp', 'commitment_timestamps'])
-@@ -370,6 +371,10 @@ class Stamper:
+@@ -177,7 +178,8 @@ def listunspent(proxy, minconf=0, maxconf=999999):
+ 
+ def find_unspent(proxy):
+     def sort_filter_unspent(unspent):
+-        DUST = 0.001 * COIN
++        # https://github.com/bitcoin/bitcoin/blob/master/src/policy/policy.cpp
++        DUST = 0.00000546 * COIN
+         return sorted(filter(lambda x: x['amount'] > DUST and x['spendable'], unspent),
+                       key=lambda x: x['amount'])
+ 
+@@ -370,6 +372,10 @@ class Stamper:
  
                  break
  
@@ -90,7 +100,7 @@ index 4007e1f..10f757d 100644
          time_to_next_tx = int(self.last_timestamp_tx + self.min_tx_interval * random.uniform(1, 2) - time.time())
          if time_to_next_tx > 0:
              # Minimum interval between transactions hasn't been reached, so do nothing
-@@ -517,7 +522,7 @@ class Stamper:
+@@ -517,7 +523,7 @@ class Stamper:
              else:
                  return False
  
@@ -99,7 +109,7 @@ index 4007e1f..10f757d 100644
          self.calendar = calendar
          self.exit_event = exit_event
  
-@@ -527,6 +532,7 @@ class Stamper:
+@@ -527,6 +533,7 @@ class Stamper:
          self.min_tx_interval = min_tx_interval
          self.max_fee = max_fee
          self.max_pending = max_pending
