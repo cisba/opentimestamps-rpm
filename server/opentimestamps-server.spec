@@ -48,7 +48,8 @@ pip3 install --upgrade pip
 pip3 install safety
 pip3 install -r requirements.txt
 pip3 install pyinstaller
-safety check
+git clone https://github.com/pyupio/safety-db.git
+safety check --db safety-db/data
 pyinstaller otsd
 pyinstaller otsd-backup.py
 deactivate
@@ -132,6 +133,7 @@ fi
 
 %changelog
 * Mon Nov 11 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.4.0-2
+- locally check safety-db cloned from github
 - patch0: --working-hours, --debug-file-backup-count, json stats, dust
 * Mon Sep  9 2019 Emanuele Cisbani <emanuele.cisbani@gmail.com> 0.4.0-1
 - upgraded to opentimestamps-server-0.4.0
